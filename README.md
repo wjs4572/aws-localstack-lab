@@ -7,10 +7,14 @@ A hands-on learning repository demonstrating real-world AWS DevOps concepts usin
 This repository uses a **branch-per-lab** model. Each lab is self-contained and teaches one AWS concept:
 
 - **`testing/pipeline`** - CI/CD Pipeline with S3 deployment
-- **`testing/iam`** - IAM least-privilege and role-based access
+- **`testing/iam`** - IAM least-privilege and role-based access ⚠️ *Pro only*
+- **`testing/ecr`** - Container Registry with Docker and ECR ⚠️ *Pro only*
 - More labs coming soon...
 
-> **📝 Note on IAM Lab:** IAM policy enforcement requires LocalStack Pro (paid) or a real AWS account. The Community Edition teaches IAM concepts and workflows but won't enforce access restrictions. See the lab instructions for details.
+> **📝 LocalStack Limitations:** IAM policy enforcement and ECR require LocalStack Pro (paid). Community Edition users can:
+> - Use these labs with a free-tier AWS account instead
+> - Study AWS CLI syntax with the provided flashcards (`AWS_COMMANDS_REFERENCE.tsv`)
+> - Learn workflows and concepts even if enforcement doesn't work locally
 
 ### Quick Start
 
@@ -36,6 +40,8 @@ docker run -d -p 4566:4566 localstack/localstack
 
 ### Configure AWS CLI
 
+**For LocalStack:**
+
 ```bash
 aws configure --profile localstack
 # AWS Access Key ID: test
@@ -43,6 +49,16 @@ aws configure --profile localstack
 # Default region: us-east-1
 # Default output format: json
 ```
+
+**For Real AWS (IAM/ECR labs):**
+
+```bash
+aws configure
+# Enter your actual AWS credentials
+# Get credentials from AWS Console → IAM → Security credentials
+```
+
+> 💡 **Tip:** To use real AWS for labs marked "Pro only", edit `config.sh` and set `USE_REAL_AWS=true`
 
 ### Load Helper Functions
 

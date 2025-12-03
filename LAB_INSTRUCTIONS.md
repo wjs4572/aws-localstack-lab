@@ -1,214 +1,261 @@
-# Lab: IAM Least-Privilege Deployment
+# Lab: Container Registry with ECR
+
+## ⚠️ LocalStack Limitation - Read First!
+
+**ECR requires LocalStack Pro** - it is **not available** in the Community Edition.
+
+When you run the scripts, you'll get this error:
+```
+An error occurred (InternalFailure) when calling the CreateRepository operation: 
+The API for service 'ecr' is either not included in your current license plan 
+or has not yet been emulated by LocalStack.
+```
+
+### How to Use This Lab
+
+**Option 1: Real AWS (Free Tier - Recommended)**
+
+✅ **Cost: $0** if you clean up (see cleanup section)
+
+1. Create a [free-tier AWS account](https://aws.amazon.com/free/) (ECR offers 500 MB storage free)
+2. Edit `config.sh` and change: `export USE_REAL_AWS=true`
+3. Run the lab scripts normally - they'll automatically use real AWS
+4. **IMPORTANT:** Run `./clean-ecr.sh` when done to avoid charges
+
+**Option 2: LocalStack Pro**
+- Requires paid LocalStack Pro subscription
+- Keep `USE_REAL_AWS=false` in `config.sh`
+- LocalStack Community Edition **does not support ECR**
+
+**Option 3: Docker-Only Learning (Free)**
+- Skip ECR commands, focus on Dockerfile and Docker workflow
+- Build and run containers locally without pushing to a registry
+
+**Option 4: Study Mode (Free)**
+- Use `AWS_COMMANDS_REFERENCE.tsv` to study ECR command syntax
+- Import the TSV into Anki for flashcard study
 
 ## Objective
 
-Demonstrate IAM security best practices by creating a restricted IAM user with the minimum permissions needed to run the CI/CD pipeline, proving you understand least-privilege access control.
+Learn Docker containerization and AWS Elastic Container Registry (ECR) by building, pushing, and deploying containerized applications - essential skills for modern cloud-native deployments.
 
 ## What You'll Learn
 
-- ✅ IAM user creation and management
-- ✅ Least-privilege policy design
-- ✅ Access key management
-- ✅ Role-based access control for CI/CD
-- ✅ Security boundary testing
-- ✅ Difference between admin and restricted users
+- ✅ Dockerfile creation for web applications
+- ✅ Docker image building and tagging
+- ✅ ECR repository management
+- ✅ Docker registry authentication with AWS
+- ✅ Container image push/pull workflows
+- ✅ Running containerized applications
+- ✅ Container lifecycle management
 
 ## Prerequisites
 
-Complete the setup from the main README:
+### For Real AWS (Option 1):
+- AWS account with credentials configured (`aws configure`)
+- Docker installed and running
+- AWS CLI v2 installed
 
-- LocalStack running
+### For LocalStack Pro (Option 2):
+- LocalStack Pro subscription and running with docker-compose
 - AWS CLI configured with localstack profile
+- Docker installed and running
+
+### For All Options:
 - Helper functions loaded (`source ./setup.sh` or `. .\setup.ps1`)
+- Edit `config.sh` to set `USE_REAL_AWS=true` or `false`
 
 ## Instructions
 
-### 1. Understand the Current State (Root User)
+### 1. Understand the Application
 
-First, verify you're using the default LocalStack root user (full admin access):
-
-```bash
-awslocal sts get-caller-identity
-```
-
-You should see `"Arn": "arn:aws:iam::000000000000:root"` - this has unlimited permissions.
-
-### 2. Run the Pipeline as Root (Baseline)
-
-Run the pipeline with full admin access to see it work:
+Examine the simple web app and Dockerfile:
 
 ```bash
-./pipeline.sh dev
+cat app/index.html
+cat Dockerfile
 ```
 
-This succeeds because the root user can do anything.
+The Dockerfile uses nginx:alpine as the base image and copies the app files to serve them.
 
-### 3. Examine the IAM Policy
+### 2. Create ECR Repository
 
-Look at the least-privilege policy:
+Run the ECR setup script to create a container registry:
 
 ```bash
-cat policies/ci-pipeline-policy.json
+./setup-ecr.sh
 ```
 
-Notice it ONLY allows:
+This creates an ECR repository named `ci-lab-app` where we'll store our Docker images.
 
-- S3 bucket creation
-- S3 list/get/put operations
-- Only on buckets matching `ci-lab-*`
-
-**No EC2, no Lambda, no RDS** - just what the pipeline needs!
-
-### 4. Create the Restricted IAM User
-
-Run the IAM setup script:
+**Verify the repository:**
 
 ```bash
-./setup-iam.sh
+awslocal ecr describe-repositories
 ```
 
-This will:
+### 3. Build and Push Docker Image
 
-1. Create IAM user `ci-pipeline-user`
-2. Generate access keys (save these!)
-3. Create the least-privilege policy
-4. Attach the policy to the user
-
-**IMPORTANT:** Copy the Access Key ID and Secret Access Key from the output!
-
-### 5. Configure AWS CLI with the New User
+Build the Docker image and push it to ECR:
 
 ```bash
-aws configure --profile ci-pipeline
+./ecr-push.sh
 ```
 
-Enter:
+This script:
+1. Builds the Docker image from the Dockerfile
+2. Tags it for ECR
+3. Authenticates Docker with ECR
+4. Pushes the image to the repository
 
-- **AWS Access Key ID:** [from setup-iam.sh output]
-- **AWS Secret Access Key:** [from setup-iam.sh output]
-- **Default region:** us-east-1
-- **Default output format:** json
+**What's happening:**
+- `docker build` creates the image layers
+- `docker tag` adds the ECR registry path
+- `ecr get-login-password` gets temporary credentials
+- `docker push` uploads to ECR
 
-### 6. Test with the Restricted User
+### 4. Verify Image in ECR
 
-Update `config.sh` to use the new profile:
+List images in the repository:
 
 ```bash
-# Change this line in config.sh:
-export AWS_PROFILE="ci-pipeline"  # Was "localstack"
+awslocal ecr list-images --repository-name ci-lab-app
 ```
 
-Now run the pipeline with restricted permissions:
+Get detailed image information:
 
 ```bash
-./pipeline.sh dev
+awslocal ecr describe-images --repository-name ci-lab-app
 ```
 
-✅ **It should still work!** The policy grants exactly what's needed.
+### 5. Pull and Run the Container
 
-### 7. Verify Security Boundaries
-
-> **⚠️ IMPORTANT - LocalStack Limitation:**
-> IAM policy enforcement is a **LocalStack Pro feature only**. The Community Edition (free) will create IAM users and policies but **will not enforce them**. All commands will succeed regardless of the policy.
->
-> **To fully test IAM enforcement, you need:**
-> - LocalStack Pro (paid subscription), OR
-> - Real AWS account (free tier eligible)
->
-> **What this lab teaches:** Even though enforcement doesn't work in Community Edition, this lab demonstrates:
-> - ✅ How to write least-privilege IAM policies
-> - ✅ IAM user and policy management workflows
-> - ✅ Access key configuration
-> - ✅ AWS CLI profile switching
-> - ✅ Production-ready IAM patterns you'll use in real AWS
-
-#### Testing in LocalStack Community Edition
-
-Even without enforcement, verify your configuration is correct:
+Pull the image from ECR and run it:
 
 ```bash
-# Verify you're using the ci-pipeline profile
-awslocal sts get-caller-identity
-# Should show: "Arn": "arn:aws:iam::000000000000:user/ci-pipeline-user"
-
-# Verify the policy is attached
-awslocal iam list-attached-user-policies --user-name ci-pipeline-user
-# Should show: "PolicyName": "CIPipelinePolicy"
-
-# Get the policy document to verify it's correct
-awslocal iam get-policy --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
-awslocal iam get-policy-version \
-  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy \
-  --version-id v1
-# Review the JSON to confirm S3-only permissions on ci-lab-* resources
+./ecr-pull.sh
 ```
 
-#### Testing in Real AWS or LocalStack Pro
+This demonstrates the pull workflow - authenticating, pulling from the registry, and running the container.
 
-If you have access to real AWS or LocalStack Pro, test enforcement:
+### 6. Test the Running Application
+
+Open your browser to http://localhost:8080 or use curl:
 
 ```bash
-# This should FAIL with AccessDenied - EC2 not in policy
-awslocal ec2 describe-instances
-
-# This should FAIL with AccessDenied - wrong bucket prefix
-awslocal s3 mb s3://my-other-bucket
-
-# This should SUCCEED - matches ci-lab-* pattern
-awslocal s3 mb s3://ci-lab-test-bucket
-
-# This should FAIL - IAM actions not in policy
-awslocal iam list-users
+curl http://localhost:8080
 ```
 
-**Expected results with enforcement:**
-- ✅ S3 operations on `ci-lab-*` buckets succeed
-- ❌ S3 operations on other buckets fail with `AccessDenied`
-- ❌ EC2, IAM, and other service operations fail with `AccessDenied`
+You should see the HTML content from `app/index.html`.
 
-This proves the policy is enforcing least-privilege correctly!
+**Check container status:**
+
+```bash
+docker ps
+docker logs ci-lab-app-test
+```
+
+### 7. Explore Docker Commands
+
+Try these Docker commands to understand container management:
+
+```bash
+# List running containers
+docker ps
+
+# View container logs
+docker logs ci-lab-app-test
+
+# Execute command in container
+docker exec ci-lab-app-test ls /usr/share/nginx/html
+
+# View container details
+docker inspect ci-lab-app-test
+
+# Stop the container
+docker stop ci-lab-app-test
+
+# Start it again
+docker start ci-lab-app-test
+```
 
 ### 8. Cleanup
 
-**Clean up S3 resources:**
+**⚠️ IMPORTANT: Run cleanup to avoid AWS charges!**
+
+Clean up all ECR resources:
 
 ```bash
-./clean-deploy.sh dev
+./clean-ecr.sh
 ```
 
-**Clean up IAM resources:**
+This removes:
+- The running container
+- Local Docker images
+- ECR repository and all images
 
-```bash
-./clean-iam.sh
-```
+**Cost Info (Real AWS):**
+- ECR storage: **$0.10/GB per month** (500 MB free for 12 months)
+- This lab uses ~50 MB = **~$0.005/month** if you forget to delete
+- Data transfer OUT: Free within same region, counts toward 500 GB free tier for internet
 
-**Reset config.sh:**
-
-```bash
-# Change back to:
-export AWS_PROFILE="localstack"
-```
+**Always clean up after labs to stay within free tier!**
 
 ## Key Concepts
 
-- **Least Privilege** - Users get minimum permissions needed, nothing more
-- **Resource-based restrictions** - Policy limits actions to specific resources (`ci-lab-*`)
-- **Separation of concerns** - Pipeline user vs. admin user
-- **Access keys** - Credentials for programmatic access (not passwords)
-- **Security boundaries** - IAM enforces what actions are allowed
+- **Dockerfile** - Instructions for building a Docker image
+- **Docker Image** - Read-only template with application and dependencies
+- **Docker Container** - Running instance of an image
+- **Container Registry** - Storage for Docker images (like npm for packages)
+- **Image Tags** - Version labels for images (e.g., `latest`, `v1.0`)
+- **Registry URI** - Full path to image: `registry/repository:tag`
+
+## Docker vs ECR Commands
+
+| Task | Docker Command | ECR Equivalent |
+|------|---------------|----------------|
+| Build image | `docker build -t name:tag .` | N/A (build locally) |
+| List images | `docker images` | `aws ecr list-images` |
+| Remove image | `docker rmi name:tag` | `aws ecr batch-delete-image` |
+| Tag image | `docker tag src dest` | N/A (done before push) |
+| Login | `docker login registry` | `aws ecr get-login-password \| docker login` |
+| Push | `docker push name:tag` | `docker push` (after login) |
+| Pull | `docker pull name:tag` | `docker pull` (after login) |
 
 ## Interview Talking Points
 
 After completing this lab, you can say:
 
-> "I implement least-privilege IAM policies for CI/CD pipelines. I create dedicated service accounts with only the S3 permissions needed for artifact deployment, tested in LocalStack. I understand resource-based restrictions and can demonstrate security boundaries by showing what actions are denied outside the policy scope."
+> "I containerize applications using Docker and manage container images with AWS ECR. I create optimized Dockerfiles, build multi-stage images, and implement secure image push/pull workflows using ECR authentication. I understand container lifecycle management and can deploy containerized applications to various environments."
 
 ## Next Steps
 
-- Try modifying the policy to be even more restrictive (e.g., read-only)
-- Add a second policy for a different use case (e.g., CloudWatch logs)
-- Explore IAM roles vs. users
-- Investigate AWS STS for temporary credentials
+- Try multi-stage Dockerfiles for smaller images
+- Explore image scanning for vulnerabilities (ECR feature)
+- Learn about image lifecycle policies (auto-delete old images)
+- Combine with ECS/EKS for container orchestration
+- Add Docker Compose for multi-container applications
+
+## Common Issues
+
+**Issue: Docker daemon not running**
+```bash
+# Windows: Start Docker Desktop
+# Linux: sudo systemctl start docker
+```
+
+**Issue: Port 8080 already in use**
+```bash
+# Change port in ecr-pull.sh: -p 8081:80
+# Or stop the conflicting container
+```
+
+**Issue: LocalStack ECR not responding**
+```bash
+# Restart LocalStack
+docker-compose down
+docker-compose up -d
+```
 
 ## License
 
