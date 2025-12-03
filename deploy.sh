@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-awslocal() {
-   aws --endpoint-url=http://localhost:4566 --profile localstack "$@"
-}
-
+# Load configuration
+source ./config.sh
 
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <environment>"
@@ -13,10 +11,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 ENVIRONMENT="$1"
-BUILD_DIR="build"
-ARTIFACT_NAME="app.zip"
-
-BUCKET_NAME="ci-lab-${ENVIRONMENT}-bucket"
+BUCKET_NAME="${PROJECT_NAME}-${ENVIRONMENT}-bucket"
 OBJECT_KEY="artifacts/${ENVIRONMENT}/app-$(date +%Y%m%d-%H%M%S).zip"
 
 echo "[DEPLOY] Environment: $ENVIRONMENT"

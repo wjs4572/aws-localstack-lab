@@ -3,9 +3,8 @@
 
 set -euo pipefail
 
-awslocal() {
-   aws --endpoint-url=http://localhost:4566 --profile localstack "$@"
-}
+# Load configuration
+source ./config.sh
 
 if [[ $# -lt 1 ]]; then
   echo "Usage: $0 <environment>"
@@ -14,7 +13,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 ENVIRONMENT="$1"
-BUCKET_NAME="ci-lab-${ENVIRONMENT}-bucket"
+BUCKET_NAME="${PROJECT_NAME}-${ENVIRONMENT}-bucket"
 
 echo "[CLEAN] Environment: $ENVIRONMENT"
 echo "[CLEAN] Bucket: s3://$BUCKET_NAME"

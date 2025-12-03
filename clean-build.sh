@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-BUILD_DIR="build"
+# Load configuration
+source ./config.sh
 
 echo "[CLEAN] Removing build directory..."
 rm -rf "$BUILD_DIR"

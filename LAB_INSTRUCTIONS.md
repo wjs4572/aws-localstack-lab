@@ -21,7 +21,22 @@ Complete the setup from the main README:
 
 ## Instructions
 
-### 1. Examine the Pipeline Structure
+### 1. Examine the Configuration
+
+All shared settings are centralized in `config.sh`:
+
+```bash
+cat config.sh   # View project configuration
+```
+
+This file defines:
+- Build directories and artifact names
+- AWS/LocalStack endpoints and profiles
+- Project naming conventions
+
+**Pro tip:** When adapting this for your own projects, just update `config.sh` instead of editing each script individually!
+
+### 2. Examine the Pipeline Structure
 
 ```bash
 ./build.sh      # Packages app into zip
@@ -30,7 +45,9 @@ Complete the setup from the main README:
 ./pipeline.sh   # Orchestrates all steps
 ```
 
-### 2. Run the Full Pipeline
+All scripts source `config.sh` to use shared configuration.
+
+### 3. Run the Full Pipeline
 
 ```bash
 ./pipeline.sh dev
@@ -62,6 +79,7 @@ awslocal sts get-caller-identity
 
 ## Key Concepts
 
+- **Centralized configuration** via `config.sh` makes the pipeline easy to adapt for new projects
 - **Build artifacts** are versioned with timestamps
 - **S3 buckets** are created automatically if they don't exist
 - **LocalStack** provides safe, local AWS environment
@@ -70,6 +88,7 @@ awslocal sts get-caller-identity
 ## Next Steps
 
 After completing this lab, try:
+
 - `testing/iam` - Add IAM security and least-privilege access
 - Modify the pipeline to deploy to different environments (staging, prod)
 - Add additional validation in test.sh

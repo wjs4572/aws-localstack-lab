@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUILD_DIR="build"
-ARTIFACT_NAME="app.zip"
+# Load configuration
+source ./config.sh
 
 echo "[TEST] Verifying build artifact exists..."
 if [[ ! -f "$BUILD_DIR/$ARTIFACT_NAME" ]]; then
@@ -10,9 +10,9 @@ if [[ ! -f "$BUILD_DIR/$ARTIFACT_NAME" ]]; then
   exit 1
 fi
 
-echo "[TEST] Checking app/index.html for a title tag..."
-if ! grep -q "<title>LocalStack CI/CD Lab</title>" app/index.html; then
-  echo "[TEST] ERROR: Expected title tag not found in app/index.html."
+echo "[TEST] Checking $APP_DIR/index.html for a title tag..."
+if ! grep -q "<title>LocalStack CI/CD Lab</title>" "$APP_DIR/index.html"; then
+  echo "[TEST] ERROR: Expected title tag not found in $APP_DIR/index.html."
   exit 1
 fi
 
