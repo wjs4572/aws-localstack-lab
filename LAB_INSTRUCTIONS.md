@@ -17,7 +17,9 @@ or has not yet been emulated by LocalStack.
 
 ✅ **Cost: $0** if you clean up (see cleanup section)
 
-1. Create a [free-tier AWS account](https://aws.amazon.com/free/) (ECR offers 500 MB storage free)
+**Setup:** See **[AWS_SETUP.md](AWS_SETUP.md)** for complete AWS account setup instructions.
+
+1. Configure AWS credentials (follow AWS_SETUP.md guide)
 2. Load the config and switch to real AWS:
    ```bash
    source ./config.sh

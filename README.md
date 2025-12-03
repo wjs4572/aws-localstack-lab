@@ -52,11 +52,11 @@ aws configure --profile localstack
 
 **For Real AWS (IAM/ECR labs):**
 
-```bash
-aws configure
-# Enter your actual AWS credentials
-# Get credentials from AWS Console → IAM → Security credentials
-```
+See **[AWS_SETUP.md](AWS_SETUP.md)** for complete instructions on:
+- Creating a free AWS account
+- Setting up IAM user with proper permissions
+- Configuring AWS CLI credentials
+- Using real AWS with the labs
 
 > 💡 **Tip:** To use real AWS for labs marked "Pro only":
 > ```bash
