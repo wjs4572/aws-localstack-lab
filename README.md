@@ -62,11 +62,11 @@ This loads the `awslocal` function that simplifies LocalStack commands.
 
 This lab series covers essential AWS DevOps skills that employers expect:
 
-✅ CI/CD pipelines with AWS services
-✅ IAM security and least-privilege access
-✅ Infrastructure as Code
-✅ Container deployments
-✅ Real-world DevOps workflows
+- ✅ CI/CD pipelines with AWS services
+- ✅ IAM security and least-privilege access
+- ✅ Infrastructure as Code
+- ✅ Container deployments
+- ✅ Real-world DevOps workflows
 
 All safely practiced locally with LocalStack - no AWS charges!
 
