@@ -7,8 +7,10 @@ A hands-on learning repository demonstrating real-world AWS DevOps concepts usin
 This repository uses a **branch-per-lab** model. Each lab is self-contained and teaches one AWS concept:
 
 - **`testing/pipeline`** - CI/CD Pipeline with S3 deployment
-- **`testing/iam`** - IAM least-privilege and role-based access (coming soon)
+- **`testing/iam`** - IAM least-privilege and role-based access
 - More labs coming soon...
+
+> **📝 Note on IAM Lab:** IAM policy enforcement requires LocalStack Pro (paid) or a real AWS account. The Community Edition teaches IAM concepts and workflows but won't enforce access restrictions. See the lab instructions for details.
 
 ### Quick Start
 

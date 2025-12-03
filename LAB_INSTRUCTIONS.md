@@ -108,20 +108,65 @@ Now run the pipeline with restricted permissions:
 
 ### 7. Verify Security Boundaries
 
-Try to do something outside the policy:
+> **⚠️ IMPORTANT - LocalStack Limitation:**
+> IAM policy enforcement is a **LocalStack Pro feature only**. The Community Edition (free) will create IAM users and policies but **will not enforce them**. All commands will succeed regardless of the policy.
+>
+> **To fully test IAM enforcement, you need:**
+> - LocalStack Pro (paid subscription), OR
+> - Real AWS account (free tier eligible)
+>
+> **What this lab teaches:** Even though enforcement doesn't work in Community Edition, this lab demonstrates:
+> - ✅ How to write least-privilege IAM policies
+> - ✅ IAM user and policy management workflows
+> - ✅ Access key configuration
+> - ✅ AWS CLI profile switching
+> - ✅ Production-ready IAM patterns you'll use in real AWS
+
+#### Testing in LocalStack Community Edition
+
+Even without enforcement, verify your configuration is correct:
 
 ```bash
-# This should FAIL with Access Denied
-awslocal ec2 describe-instances
+# Verify you're using the ci-pipeline profile
+awslocal sts get-caller-identity
+# Should show: "Arn": "arn:aws:iam::000000000000:user/ci-pipeline-user"
 
-# This should also FAIL - wrong bucket prefix
-awslocal s3 mb s3://my-other-bucket
+# Verify the policy is attached
+awslocal iam list-attached-user-policies --user-name ci-pipeline-user
+# Should show: "PolicyName": "CIPipelinePolicy"
 
-# This should WORK - matches ci-lab-* pattern
-awslocal s3 mb s3://ci-lab-test-bucket
+# Get the policy document to verify it's correct
+awslocal iam get-policy --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
+awslocal iam get-policy-version \
+  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy \
+  --version-id v1
+# Review the JSON to confirm S3-only permissions on ci-lab-* resources
 ```
 
-This proves the policy is enforcing least-privilege!
+#### Testing in Real AWS or LocalStack Pro
+
+If you have access to real AWS or LocalStack Pro, test enforcement:
+
+```bash
+# This should FAIL with AccessDenied - EC2 not in policy
+awslocal ec2 describe-instances
+
+# This should FAIL with AccessDenied - wrong bucket prefix
+awslocal s3 mb s3://my-other-bucket
+
+# This should SUCCEED - matches ci-lab-* pattern
+awslocal s3 mb s3://ci-lab-test-bucket
+
+# This should FAIL - IAM actions not in policy
+awslocal iam list-users
+```
+
+**Expected results with enforcement:**
+- ✅ S3 operations on `ci-lab-*` buckets succeed
+- ❌ S3 operations on other buckets fail with `AccessDenied`
+- ❌ EC2, IAM, and other service operations fail with `AccessDenied`
+
+This proves the policy is enforcing least-privilege correctly!
 
 ### 8. Cleanup
 
