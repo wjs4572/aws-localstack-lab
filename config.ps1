@@ -48,6 +48,19 @@ function awslocal {
   awscmd $args
 }
 
+# Helper functions to switch between AWS and LocalStack
+function use_aws {
+  $env:USE_REAL_AWS = "true"
+  . $PSCommandPath
+  Write-Host "✓ Switched to REAL AWS" -ForegroundColor Green
+}
+
+function use_localstack {
+  $env:USE_REAL_AWS = "false"
+  . $PSCommandPath
+  Write-Host "✓ Switched to LocalStack" -ForegroundColor Green
+}
+
 # Project-specific configuration
 $env:PROJECT_NAME = "ci-lab"
 $env:BUILD_DIR = "build"

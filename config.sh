@@ -10,10 +10,14 @@ export APP_DIR="app"
 # ==============================================================================
 # TOGGLE: Set USE_REAL_AWS=true to use real AWS, false for LocalStack
 # ==============================================================================
-export USE_REAL_AWS=false  # Change to 'true' to use real AWS instead of LocalStack
+if [ -z "$USE_REAL_AWS" ]; then
+  export USE_REAL_AWS=false  # Default to LocalStack if not set
+fi
 
 # AWS Configuration
-export AWS_REGION="us-east-1"
+if [ -z "$AWS_REGION" ]; then
+  export AWS_REGION="us-east-1"
+fi
 
 if [ "$USE_REAL_AWS" = "true" ]; then
   export AWS_PROFILE="default"  # Or your AWS profile name
@@ -54,6 +58,21 @@ awslocal() {
   awscmd "$@"
 }
 
+# Helper function to switch between AWS and LocalStack
+use_aws() {
+  export USE_REAL_AWS=true
+  source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+  echo "✓ Switched to REAL AWS"
+}
+
+use_localstack() {
+  export USE_REAL_AWS=false
+  source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+  echo "✓ Switched to LocalStack"
+}
+
 # Export the functions so they're available in scripts that source this
 export -f awscmd
 export -f awslocal
+export -f use_aws
+export -f use_localstack

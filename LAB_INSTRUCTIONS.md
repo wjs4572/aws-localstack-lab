@@ -18,9 +18,16 @@ or has not yet been emulated by LocalStack.
 ✅ **Cost: $0** if you clean up (see cleanup section)
 
 1. Create a [free-tier AWS account](https://aws.amazon.com/free/) (ECR offers 500 MB storage free)
-2. Edit `config.sh` and change: `export USE_REAL_AWS=true`
+2. Load the config and switch to real AWS:
+   ```bash
+   source ./config.sh
+   use_aws              # Switches to real AWS
+   ```
+   Or edit `config.sh` line 14: `export USE_REAL_AWS=true`
 3. Run the lab scripts normally - they'll automatically use real AWS
 4. **IMPORTANT:** Run `./clean-ecr.sh` when done to avoid charges
+
+💡 **Tip:** Switch back anytime with `use_localstack`
 
 **Option 2: LocalStack Pro**
 - Requires paid LocalStack Pro subscription

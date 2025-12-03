@@ -58,7 +58,13 @@ aws configure
 # Get credentials from AWS Console → IAM → Security credentials
 ```
 
-> 💡 **Tip:** To use real AWS for labs marked "Pro only", edit `config.sh` and set `USE_REAL_AWS=true`
+> 💡 **Tip:** To use real AWS for labs marked "Pro only":
+> ```bash
+> source ./config.sh
+> use_aws              # Switches to real AWS
+> use_localstack       # Switches back to LocalStack
+> ```
+> Or edit `config.sh` and set `USE_REAL_AWS=true`
 
 ### Load Helper Functions
 
@@ -74,7 +80,11 @@ source ./setup.sh
 . .\setup.ps1
 ```
 
-This loads the `awslocal` function that simplifies LocalStack commands.
+This loads AWS utilities including:
+- `awscmd` - Works with both LocalStack and real AWS
+- `awslocal` - Alias for backward compatibility
+- `use_aws` - Switch to real AWS in current session
+- `use_localstack` - Switch back to LocalStack
 
 ## What You'll Learn
 
