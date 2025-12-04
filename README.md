@@ -2,17 +2,21 @@
 
 A hands-on learning repository demonstrating real-world AWS DevOps concepts. Learn AWS CLI, Docker, IAM, and CI/CD pipelines with hands-on labs.
 
+> **Technology Selection Disclaimer:** The technologies used in this project were selected based on project-specific requirements, testing results, and practical development constraints observed at the time of implementation. These selections reflect the scope and goals of this work and should not be interpreted as endorsements or guarantees of performance, cost, or future availability.
+
+> **Cost Disclaimer:** While some cloud services or cloud service emulation platforms may incur only minimal usage-based charges under certain conditions, actual costs vary by region, usage patterns, account configuration, and local currency exchange rates. Users are solely responsible for evaluating and accepting any financial risk.
+
 ## 🎯 Which Lab Should I Use?
 
 | Lab | Works with LocalStack Community (Free) | Best Way to Run It |
 |-----|---------------------------------------|-------------------|
-| **Pipeline (S3)** | ✅ YES | LocalStack locally - works great! |
-| **IAM** | ❌ NO - Requires Pro | AWS directly (free tier) or CloudShell |
-| **ECR** | ❌ NO - Requires Pro | AWS directly (free tier) + local Docker |
+| **Pipeline (S3)** | ✅ Based on testing | LocalStack locally |
+| **IAM** | ⚠️ Limited in our testing | AWS Free Tier or CloudShell |
+| **ECR** | ⚠️ Limited in our testing | AWS Free Tier + local Docker |
 
-**Bottom line:** 
-- **Pipeline lab** - Use free LocalStack Community (that's what it's for!)
-- **IAM/ECR labs** - Use real AWS free tier (simpler than buying LocalStack Pro)
+**Summary:** 
+- **Pipeline lab** - LocalStack Community functionality observed
+- **IAM/ECR labs** - AWS Free Tier recommended based on testing results
 
 ## Lab Structure
 
@@ -23,16 +27,13 @@ This repository uses a **branch-per-lab** model. Each lab is self-contained:
 - **`testing/ecr`** - Container Registry with Docker and ECR 🔴 **AWS free tier recommended**
 - More labs coming soon...
 
-### Why LocalStack Community Has Limitations
+### LocalStack Observations
 
-LocalStack is a company that offers:
-- **Community Edition (Free)** - Basic services like S3, SQS, Lambda
-- **Pro Edition ($$$)** - Advanced features like IAM enforcement, ECR, ECS
+Based on our testing at the time of implementation:
 
-The IAM and ECR labs hit Pro-only features. You have 3 options:
-1. **Use AWS free tier** (Recommended) - $0 cost, real AWS experience
-2. **Buy LocalStack Pro** - $40+/month, good if you need it for work
-3. **Study the commands** - Use the flashcards, skip the hands-on execution
+- LocalStack Community Edition provided functionality for basic services (S3, SQS, Lambda)
+- Advanced features (IAM enforcement, ECR) were available in paid tiers during our testing
+- AWS Free Tier was used for IAM and ECR labs to access full service functionality
 
 ## 🚀 Quick Decision Guide
 

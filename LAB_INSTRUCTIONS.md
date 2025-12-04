@@ -15,7 +15,7 @@ or has not yet been emulated by LocalStack.
 
 **Option 1: Real AWS (Free Tier - Recommended)**
 
-✅ **Cost: $0** if you clean up (see cleanup section)
+> **Cost Disclaimer:** While some cloud services or cloud service emulation platforms may incur only minimal usage-based charges under certain conditions, actual costs vary by region, usage patterns, account configuration, and local currency exchange rates. Users are solely responsible for evaluating and accepting any financial risk.
 
 **Setup:** See **[AWS_SETUP.md](AWS_SETUP.md)** for complete AWS account setup instructions.
 
@@ -249,11 +249,11 @@ This removes:
 - ECR repository and all images
 
 **Cost Info (Real AWS):**
-- ECR storage: **$0.10/GB per month** (500 MB free for 12 months)
-- This lab uses ~50 MB = **~$0.005/month** if you forget to delete
-- Data transfer OUT: Free within same region, counts toward 500 GB free tier for internet
 
-**Always clean up after labs to stay within free tier!**
+- ECR storage: 500 MB free tier (12 months from account creation)
+- Data transfer OUT: Free within same region
+
+**Cleanup recommended** to stay within free tier limits.
 
 ## Key Concepts
 
