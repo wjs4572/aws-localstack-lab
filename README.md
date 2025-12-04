@@ -49,18 +49,29 @@ Each lab includes:
 - 💡 Script details appendix showing actual AWS commands
 - 📝 Anki flashcards for command reference
 
-## 💰 Cost & LocalStack Support
+## 💰 Cost & Technology Choices
 
-**LocalStack Community (Free):**
-- ✅ Pipeline lab works perfectly
-- ⚠️ IAM/ECR labs don't support policy enforcement or ECR
+> **Technology Selection Disclaimer:** The technologies used in this project were selected based on project-specific requirements, testing results, and practical development constraints observed at the time of implementation. These selections reflect the scope and goals of this work and should not be interpreted as endorsements or guarantees of performance, cost, or future availability.
 
-**AWS Free Tier (Recommended for IAM/ECR):**
-- IAM: Always free
-- ECR: 500 MB storage free for 12 months
-- Cost: $0 if you run cleanup scripts
+**Technologies used in this project include:**
 
-See `AWS_SETUP.md` in ECR/IAM branches for AWS account setup.
+- AWS CLI for command-line interaction with cloud-style APIs
+- LocalStack for local cloud service emulation
+- Docker for containerized service execution
+- Bash for CI/CD pipeline scripting
+- GitHub for source control and versioning
+
+**LocalStack Community Edition (based on our testing):**
+- ✅ Pipeline lab functionality observed
+- ⚠️ IAM/ECR policy enforcement not available in our testing
+
+**AWS Free Tier:**
+- IAM: Always free tier available
+- ECR: 500 MB storage free tier (12 months)
+
+> **Cost Disclaimer:** While some cloud services or cloud service emulation platforms may incur only minimal usage-based charges under certain conditions, actual costs vary by region, usage patterns, account configuration, and local currency exchange rates. Users are solely responsible for evaluating and accepting any financial risk.
+
+See `AWS_SETUP.md` in lab branches for account setup details.
 
 ## Prerequisites
 

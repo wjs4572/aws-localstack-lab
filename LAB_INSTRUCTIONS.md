@@ -16,21 +16,24 @@ Learn AWS Lambda serverless computing by creating and deploying functions in bot
 
 ## ⚠️ LocalStack Limitation
 
-**Lambda requires LocalStack Pro** for advanced features. Community Edition supports basic Lambda but with limitations:
-- ✅ Function creation and invocation work
-- ⚠️ Limited CloudWatch logs integration
-- ⚠️ Some runtimes may not be fully supported
+**Based on our testing**, advanced Lambda features were available in LocalStack Pro. The Community Edition provided basic Lambda functionality in our testing:
+
+- ✅ Function creation and invocation worked
+- ⚠️ CloudWatch logs integration was limited
+- ⚠️ Some runtimes may have varying support
 
 **Recommended:** Use **AWS Free Tier** for this lab:
-- Lambda: 1 million requests/month free (always)
-- CloudWatch Logs: 5 GB free
-- Cost: $0 for this lab
+
+- Lambda: 1 million requests/month free tier available
+- CloudWatch Logs: 5 GB free tier available
+
+> **Cost Disclaimer:** While some cloud services or cloud service emulation platforms may incur only minimal usage-based charges under certain conditions, actual costs vary by region, usage patterns, account configuration, and local currency exchange rates. Users are solely responsible for evaluating and accepting any financial risk.
 
 See `AWS_SETUP.md` for AWS account setup.
 
 ## Prerequisites
 
-### For LocalStack (Limited)
+### For LocalStack (Based on Testing)
 - LocalStack running
 - AWS CLI configured with localstack profile
 - Python 3.11
