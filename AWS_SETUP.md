@@ -11,7 +11,7 @@ While this repository supports LocalStack for local testing, **real AWS is recom
 - ✅ **Real-world experience** - Actual AWS behavior, not simulations
 - ✅ **Portfolio value** - Can demonstrate on real infrastructure
 
-**Cost estimate for all labs:** ~$0.50-2.00/month (assuming proper cleanup)
+**Cost estimate for all labs:** Minimal with proper cleanup (most services covered by Free Tier)
 
 ## Step 1: Create AWS Account
 
@@ -194,7 +194,7 @@ Protect yourself from unexpected charges:
 2. Click **Budgets** in the left sidebar
 3. Click **Create budget**
 4. Choose **Zero spend budget** (gets alert on any charges)
-5. Or create a custom budget (e.g., $5/month threshold)
+5. Or create a custom budget (set your own threshold)
 6. Enter your email for notifications
 7. Click **Create budget**
 

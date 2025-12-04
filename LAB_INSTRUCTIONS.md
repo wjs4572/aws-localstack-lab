@@ -1,354 +1,422 @@
-# Lab: AWS Lambda Functions (Python & Java)
+# Database Lab - MySQL with Python & Java
 
-## Objective
+Learn database connectivity and CRUD operations using MySQL in Docker with both Python and Java.
 
-Learn AWS Lambda serverless computing by creating and deploying functions in both Python and Java. Compare runtimes, understand the Lambda execution model, and practice CloudWatch logging - essential skills for modern serverless architectures.
+> **Technology Selection Disclaimer:** The technologies used in this project were selected based on project-specific requirements, testing results, and practical development constraints observed at the time of implementation. These selections reflect the scope and goals of this work and should not be interpreted as endorsements or guarantees of performance, cost, or future availability.
 
 ## What You'll Learn
 
-- ✅ Lambda function creation in Python and Java
-- ✅ IAM execution roles for Lambda
-- ✅ Function deployment and versioning
-- ✅ Lambda invocation via AWS CLI
-- ✅ CloudWatch logs for debugging
-- ✅ Runtime performance comparison
-- ✅ Serverless best practices
-
-## ⚠️ LocalStack Limitation
-
-**Lambda requires LocalStack Pro** for advanced features. Community Edition supports basic Lambda but with limitations:
-- ✅ Function creation and invocation work
-- ⚠️ Limited CloudWatch logs integration
-- ⚠️ Some runtimes may not be fully supported
-
-**Recommended:** Use **AWS Free Tier** for this lab:
-- Lambda: 1 million requests/month free (always)
-- CloudWatch Logs: 5 GB free
-- Cost: $0 for this lab
-
-See `AWS_SETUP.md` for AWS account setup.
+- **Database Setup**: Run MySQL 8.0 in Docker with persistent storage
+- **Schema Management**: Create tables with migrations
+- **Connection Pooling**: Configure connection pools (Python: MySQLConnectionPool, Java: HikariCP)
+- **CRUD Operations**: Implement Create, Read, Update, Delete in both languages
+- **SQL Best Practices**: Use prepared statements to prevent SQL injection
+- **Polyglot Development**: Same database accessed by Python and Java
 
 ## Prerequisites
 
-### For LocalStack (Limited)
-- LocalStack running
-- AWS CLI configured with localstack profile
-- Python 3.11
-- Java 17 + Maven
+- Docker Desktop running
+- WSL with Java 21 and Maven (see `../WSL_SETUP.md`)
+- Python 3 with pip
 
-### For Real AWS (Recommended)
-- AWS account with credentials configured
-- AWS CLI v2
-- Python 3.11
-- Java 21 + Maven
-- `jq` installed (for JSON parsing)
-- Helper functions loaded (`source ./config.sh` and `use_aws`)
+## Quick Start
 
-**WSL/Linux setup:**
 ```bash
-sudo apt install -y openjdk-21-jdk maven jq
-```
+# 1. Setup database
+./setup-database.sh
 
-See `WSL_SETUP.md` for complete WSL configuration.
+# 2. Run Python demo
+./test-database.sh python
 
-## Instructions
+# 3. Run Java demo
+./test-database.sh java
 
-### 1. Understand the Lambda Functions
+# 4. View in phpMyAdmin
+open http://localhost:8080  # Username: labuser, Password: labpassword
 
-Examine both function implementations:
+# 5. Cleanup
+./clean-database.sh
 
 **Python function:**
 ```bash
-cat lambda-python/lambda_function.py
 ```
 
-**Java function:**
-```bash
-cat lambda-java/src/main/java/com/example/lambda/Handler.java
+## What Gets Created
+
+### Database Resources
+- **MySQL Container**: Database server on port 3306
+- **phpMyAdmin Container**: Web GUI on port 8080
+- **Database**: `userdb` with `users` table
+- **Sample Data**: 3 pre-loaded users
+
+### Application Code
+- **Python App**: `python-app/db_operations.py` - CRUD with connection pooling
+- **Java App**: `java-app/` - Maven project with HikariCP connection pool
+
+## Architecture
+
+```
+┌─────────────────┐     ┌─────────────────┐
+│  Python App     │     │    Java App     │
+│  (pooled conn)  │     │   (HikariCP)    │
+└────────┬────────┘     └────────┬────────┘
+         │                       │
+         └───────────┬───────────┘
+                     │
+              ┌──────▼──────┐
+              │   MySQL     │
+              │   (Docker)  │
+              └─────────────┘
+                     │
+              ┌──────▼──────┐
+              │ phpMyAdmin  │
+              │  (Web GUI)  │
+              └─────────────┘
 ```
 
-Notice the different handler patterns and how each runtime structures responses.
+## Database Schema
 
-### 2. Switch to AWS Mode (Recommended)
-
-```bash
-source ./config.sh
-use_aws
+```sql
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    full_name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 ```
 
-Or to use LocalStack (limited):
-```bash
-source ./config.sh
-use_localstack
+## Connection Details
+
+- **Host**: `localhost:3306`
+- **Database**: `userdb`
+- **Username**: `labuser`
+- **Password**: `labpassword`
+
+## Python Implementation
+
+### Key Features
+- `MySQLConnectionPool` with pool size 5
+- Prepared statements for all queries
+- Context managers for connection handling
+- JSON serialization with datetime support
+
+### Example Usage
+
+```python
+from db_operations import DatabaseService
+
+db = DatabaseService()
+
+# Create user
+user_id = db.create_user('alice', 'alice@example.com', 'Alice Smith')
+
+# Read user
+user = db.get_user(user_id)
+print(user)
+
+# Update user
+db.update_user(user_id, email='alice.smith@example.com', full_name='Alice M. Smith')
+
+# Delete user
+db.delete_user(user_id)
 ```
 
-### 3. Deploy Lambda Functions
+## Java Implementation
 
-Run the setup script to create both functions:
+### Key Features
+- HikariCP connection pool (max 10, min idle 2)
+- PreparedStatement for all queries
+- Try-with-resources for cleanup
+- Gson for JSON output
 
-```bash
-./setup-lambda.sh
+### Example Usage
+
+```java
+DatabaseService db = new DatabaseService();
+
+// Create user
+int userId = db.createUser("bob", "bob@example.com", "Bob Jones");
+
+// Read user
+Map<String, Object> user = db.getUser(userId);
+System.out.println(user);
+
+// Update user
+db.updateUser(userId, "bob.jones@example.com", "Robert Jones");
+
+// Delete user
+db.deleteUser(userId);
+
+// Don't forget to close!
+db.close();
 ```
 
-This creates:
-- IAM execution role (for real AWS)
-- Python Lambda function (hello-python)
-- Java Lambda function (hello-java)
+## Testing the Lab
 
-💡 *The Java build may take 1-2 minutes on first run while Maven downloads dependencies.*
-
-💡 *See "Script Details" section at the end to understand what commands run under the hood.*
-
-### 4. Verify Functions Were Created
-
-List your Lambda functions:
-
-```bash
-awscmd lambda list-functions
-```
-
-Get details about a specific function:
-
-```bash
-awscmd lambda get-function --function-name hello-python
-awscmd lambda get-function --function-name hello-java
-```
-
-### 5. Invoke the Functions
-
-Test both functions:
-
-```bash
-./invoke-lambda.sh
-```
-
-This invokes both functions with sample payloads and displays the responses.
-
-**Manual invocation example:**
-```bash
-awscmd lambda invoke \
-    --function-name hello-python \
-    --payload '{"name":"Your Name"}' \
-    --cli-binary-format raw-in-base64-out \
-    response.json
-
-cat response.json | jq '.'
-```
-
-### 6. View CloudWatch Logs (Real AWS Only)
-
-If using real AWS, view the execution logs:
-
-```bash
-./logs-lambda.sh
-```
-
-Or manually:
-```bash
-awscmd logs tail /aws/lambda/hello-python --since 5m
-awscmd logs tail /aws/lambda/hello-java --since 5m
-```
-
-### 7. Compare Runtimes
-
-Invoke both functions multiple times and observe:
-- **Cold start time** (first invocation)
-- **Warm start time** (subsequent invocations)
-- **Response format differences**
-- **Log output patterns**
-
-Python typically has faster cold starts, but both are fast when warm.
-
-### 8. Experiment (Optional)
-
-Try modifying the functions:
-- Add error handling
-- Return different status codes
-- Add environment variables
-- Increase memory/timeout settings
-
-Update a function:
-```bash
-cd lambda-python
-# Edit lambda_function.py
-zip ../lambda-python.zip lambda_function.py
-cd ..
-awscmd lambda update-function-code \
-    --function-name hello-python \
-    --zip-file fileb://lambda-python.zip
-```
-
-### 9. Cleanup
-
-**⚠️ IMPORTANT: Clean up to avoid charges (though minimal for Lambda)**
+### Run Both Demos
 
 ```bash
-./clean-lambda.sh
+./test-database.sh all
 ```
 
-This removes all Lambda functions, IAM roles, and local build artifacts.
+### Run Individual Demos
 
-💡 *See "Script Details" section to understand the cleanup process.*
+```bash
+./test-database.sh python  # Python only
+./test-database.sh java    # Java only
+```
+
+### Manual Testing
+
+```bash
+# Connect with MySQL client
+docker exec -it lab-mysql mysql -u labuser -plabpassword userdb
+
+# List users
+SELECT * FROM users;
+
+# Exit
+exit
+```
+
+## Migration to AWS RDS
+
+When you're ready to use AWS RDS:
+
+1. **Create RDS Instance** (MySQL 8.0)
+
+   ```bash
+   aws rds create-db-instance \
+       --db-instance-identifier my-database \
+       --db-instance-class db.t3.micro \
+       --engine mysql \
+       --master-username admin \
+       --master-user-password YourPassword \
+       --allocated-storage 20
+   ```
+
+2. **Update Connection Strings**
+   - Python: Update `host` in `db_operations.py`
+   - Java: Update `jdbcUrl` in `DatabaseService.java`
+
+3. **Run Migrations**
+
+   ```bash
+   mysql -h your-rds-endpoint.amazonaws.com -u admin -p < migrations/001_create_users.sql
+   ```
+
+4. **Security Groups**: Allow inbound on port 3306
 
 ## Key Concepts
 
-- **Serverless** - No server management, pay per execution
-- **Event-driven** - Functions triggered by events (API calls, S3 uploads, etc.)
-- **Execution role** - IAM role that gives Lambda permissions
-- **Handler** - The entry point function Lambda calls
-- **Cold start** - Initialization delay on first invocation
-- **Warm start** - Fast execution when container is already running
-- **CloudWatch Logs** - Automatic logging for debugging
+### Connection Pooling
 
-## Python vs Java Lambda
+- **Why**: Creating connections is expensive (100ms+)
+- **How**: Pool reuses connections across requests
+- **Python**: MySQLConnectionPool manages pool automatically
+- **Java**: HikariCP provides enterprise-grade pooling
 
-| Aspect | Python | Java |
-|--------|--------|------|
-| **Cold start** | ~100-200ms | ~1-2 seconds |
-| **Warm start** | ~1-5ms | ~1-5ms |
-| **Package size** | Smaller (~KB) | Larger (~MB with JAR) |
-| **Memory usage** | Lower | Higher |
-| **Development** | Faster iteration | More boilerplate |
-| **Performance** | Good | Excellent (when warm) |
-| **Best for** | Quick scripts, APIs | Enterprise, complex logic |
+### Prepared Statements
 
-## Interview Talking Points
+- **Why**: Prevent SQL injection attacks
+- **How**: SQL and data sent separately
+- **Example**: `SELECT * FROM users WHERE id = ?` with parameter binding
 
-After completing this lab, you can say:
+### Transactions
 
-> "I develop serverless applications using AWS Lambda in both Python and Java. I understand Lambda execution models, cold vs warm starts, and IAM role configuration. I've deployed functions via AWS CLI, integrated with CloudWatch for logging and monitoring, and can compare runtime characteristics to choose the right language for the use case."
+- **CRUD Operations**: Auto-commit mode (default)
+- **Multi-step**: Use explicit transactions with rollback
+- **Error Handling**: Always rollback on errors
 
-## Next Steps
+## Troubleshooting
 
-- Add API Gateway to create REST endpoints
-- Trigger Lambda from S3 events
-- Use Lambda Layers for shared dependencies
-- Implement Lambda with DynamoDB
-- Explore Step Functions for Lambda orchestration
-- Try container image deployments
-
----
-
-## Script Details (Optional)
-
-This section explains what AWS commands each script executes. Use this to understand the Lambda workflow or run commands manually for learning.
-
-### setup-lambda.sh
-
-Creates IAM role and deploys both Lambda functions:
+### MySQL Won't Start
 
 ```bash
-# Create IAM execution role (real AWS only)
-awscmd iam create-role \
-    --role-name lambda-execution-role \
-    --assume-role-policy-document '{
-      "Version": "2012-10-17",
-      "Statement": [{
-        "Effect": "Allow",
-        "Principal": {"Service": "lambda.amazonaws.com"},
-        "Action": "sts:AssumeRole"
-      }]
-    }'
+# Check Docker
+docker ps
 
-# Attach Lambda execution policy
-awscmd iam attach-role-policy \
-    --role-name lambda-execution-role \
-    --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+# View MySQL logs
+docker logs lab-mysql
 
-# Package Python function
-cd lambda-python
-zip lambda-python.zip lambda_function.py
+# Restart containers
+docker-compose restart mysql
+```
 
-# Create Python Lambda
-awscmd lambda create-function \
-    --function-name hello-python \
-    --runtime python3.11 \
-    --role <ROLE_ARN> \
-    --handler lambda_function.lambda_handler \
-    --zip-file fileb://lambda-python.zip
+### Connection Refused
 
-# Build Java function
-cd lambda-java
+```bash
+# Verify MySQL is running
+docker exec lab-mysql mysqladmin ping -h localhost -u root -prootpassword
+
+# Check port
+netstat -an | grep 3306
+```
+
+### Python Module Not Found
+
+```bash
+# Install dependencies
+pip3 install -r python-app/requirements.txt
+```
+
+### Java Build Fails
+
+```bash
+# Clean rebuild
+cd java-app
 mvn clean package
-
-# Create Java Lambda
-awscmd lambda create-function \
-    --function-name hello-java \
-    --runtime java17 \
-    --role <ROLE_ARN> \
-    --handler com.example.lambda.Handler::handleRequest \
-    --zip-file fileb://lambda-java/target/lambda-java-1.0.0.jar \
-    --timeout 30 \
-    --memory-size 512
 ```
 
-### invoke-lambda.sh
+## Cost Analysis
 
-Invokes both functions and saves responses:
+### Docker (This Lab)
+
+- **Cost**: $0
+- **Performance**: Local, very fast
+- **Limitations**: Not accessible from other machines
+
+### AWS RDS db.t3.micro
+
+- **Cost**: Involves ongoing AWS charges (verify current pricing)
+- **Performance**: Network latency (~5-50ms)
+- **Benefits**: Managed backups, multi-AZ, automatic updates
+
+## Learning Path
+
+1. ✅ **Start Here**: MySQL in Docker (this lab)
+2. 🔄 **Next**: Add more tables and relationships
+3. 🔄 **Advanced**: Connection pooling tuning
+4. 🔄 **Production**: Migrate to AWS RDS
+
+## Real-World Applications
+
+- **Microservices**: Each service maintains its own database connection pool
+- **Web APIs**: REST endpoints backed by database CRUD operations
+- **Data Pipelines**: ETL processes reading/writing to databases
+- **AWS Lambda**: Connection pooling critical for serverless (use RDS Proxy)
+
+## Files Created
+
+```
+database-lab/
+├── docker-compose.yml           # MySQL + phpMyAdmin config
+├── migrations/
+│   └── 001_create_users.sql     # Schema and sample data
+├── python-app/
+│   ├── db_operations.py         # Python CRUD with pooling
+│   └── requirements.txt         # Python dependencies
+├── java-app/
+│   ├── pom.xml                  # Maven configuration
+│   └── src/main/java/com/example/database/
+│       ├── DatabaseService.java # Java CRUD with HikariCP
+│       └── DatabaseDemo.java    # Demo main class
+├── setup-database.sh            # Start MySQL and verify
+├── test-database.sh             # Run Python or Java demos
+└── clean-database.sh            # Stop and cleanup
+```
+
+---
+
+## Appendix: Script Details
+
+### setup-database.sh
 
 ```bash
-# Invoke Python Lambda
-awscmd lambda invoke \
-    --function-name hello-python \
-    --payload '{"name":"DevOps Engineer"}' \
-    --cli-binary-format raw-in-base64-out \
-    response-python.json
+# Start containers
+docker-compose up -d mysql phpmyadmin
 
-# Invoke Java Lambda
-awscmd lambda invoke \
-    --function-name hello-java \
-    --payload '{"name":"Cloud Architect"}' \
-    --cli-binary-format raw-in-base64-out \
-    response-java.json
+# Wait for MySQL health check (up to 60 seconds)
+docker exec lab-mysql mysqladmin ping -h localhost -u root -prootpassword
+
+# Migrations run automatically via docker-entrypoint-initdb.d
+# Check: docker exec lab-mysql mysql -u labuser -plabpassword -e "SHOW TABLES FROM userdb"
 ```
 
-### logs-lambda.sh
+**What it does**:
+- Starts MySQL 8.0 and phpMyAdmin containers
+- Waits for MySQL to be ready (health check)
+- Migrations in `./migrations/` run automatically on first startup
+- Prints connection details and next steps
 
-Views CloudWatch logs for both functions (real AWS only):
+### test-database.sh
 
 ```bash
-# Tail Python Lambda logs
-awscmd logs tail /aws/lambda/hello-python --since 5m --format short
+# Python demo
+pip3 install -r python-app/requirements.txt
+python3 python-app/db_operations.py
 
-# Tail Java Lambda logs
-awscmd logs tail /aws/lambda/hello-java --since 5m --format short
+# Java demo
+cd java-app && mvn clean package -q
+java -jar java-app/target/database-lab-1.0.0.jar
 ```
 
-### clean-lambda.sh
+**What it does**:
+- Installs Python dependencies (if needed)
+- Runs Python CRUD demo
+- Builds Java app with Maven (if needed)
+- Runs Java CRUD demo
+- Both demos create → read → update → delete → verify
 
-Removes all Lambda resources:
+**Usage**:
 
 ```bash
-# Delete Lambda functions
-awscmd lambda delete-function --function-name hello-python
-awscmd lambda delete-function --function-name hello-java
-
-# Detach policy from role
-awscmd iam detach-role-policy \
-    --role-name lambda-execution-role \
-    --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-
-# Delete IAM role
-awscmd iam delete-role --role-name lambda-execution-role
-
-# Clean local files
-rm -f lambda-python.zip response-*.json
-rm -rf lambda-java/target
+./test-database.sh all     # Run both Python and Java
+./test-database.sh python  # Python only
+./test-database.sh java    # Java only
 ```
 
-### awscmd helper
+### clean-database.sh
 
-All scripts use `awscmd` to work with both LocalStack and real AWS:
-
-- **LocalStack mode**: `awscmd` → `aws --endpoint-url=http://localhost:4566`
-- **Real AWS mode**: `awscmd` → `aws --profile default`
-
-Switch between modes:
 ```bash
-source ./config.sh
-use_aws         # Switch to real AWS
-use_localstack  # Switch to LocalStack
+# Stop containers
+docker-compose down
+
+# Remove data volume (optional, asks first)
+docker volume rm project_aws_localstack_lab_mysql_data
+
+# Clean Java build
+rm -rf java-app/target
 ```
+
+**What it does**:
+- Asks for confirmation
+- Stops MySQL and phpMyAdmin containers
+- Optionally removes data volume (asks first)
+- Removes Java build artifacts
+
+---
+
+## Why MySQL in Docker?
+
+This lab demonstrates database connectivity and CRUD operations with the following goals:
+
+- Learn real database skills (connection pooling, prepared statements, transactions)
+- Show polyglot development (Python and Java accessing the same database)
+- Keep costs at $0 for learning and portfolio demonstration
+- Build transferable skills that work with AWS RDS
+
+**Why not LocalStack RDS?**
+
+Based on our testing at the time of implementation, the LocalStack Community Edition did not provide functional emulation for the database services required for this project. While expanded database emulation is available in paid LocalStack tiers, those options were outside the scope of this work.
+
+**Why not AWS RDS?**
+
+While AWS RDS is production-ready with managed backups and automatic updates, running instances involves ongoing costs. For learning and portfolio purposes, we chose a zero-cost alternative.
+
+**MySQL in Docker provides:**
+
+- ✅ Real MySQL 8.0 database with full functionality
+- ✅ Actual database skills (not API mocks)
+- ✅ Code that works unchanged with AWS RDS
+- ✅ Zero cost for development and testing
+- ✅ Fast local performance
+
+The skills learned in this lab transfer directly to AWS RDS when production deployment is needed.
+
+---
 
 ---
 
@@ -360,11 +428,3 @@ Licensed under the MIT License.
 If you use this project in a public product or educational material,
 please cite: "Developed by W. Simpson / SimpsonConcepts".
 
-
-## License
-
-Licensed under the MIT License.
-
-**Attribution requested:**
-If you use this project in a public product or educational material,
-please cite: "Developed by W. Simpson / SimpsonConcepts".

@@ -10,3 +10,37 @@ services:
       - DEBUG=1
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+
+  mysql:
+    image: mysql:8.0
+    container_name: lab-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: userdb
+      MYSQL_USER: labuser
+      MYSQL_PASSWORD: labpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: lab-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: labuser
+      PMA_PASSWORD: labpassword
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+
+volumes:
+  mysql_data:
