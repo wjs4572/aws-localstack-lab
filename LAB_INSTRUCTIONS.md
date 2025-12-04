@@ -67,12 +67,35 @@ Run the IAM setup script:
 ./setup-iam.sh
 ```
 
-This will:
+**What the script does:**
 
-1. Create IAM user `ci-pipeline-user`
-2. Generate access keys (save these!)
-3. Create the least-privilege policy
-4. Attach the policy to the user
+```bash
+# Check if user exists
+awscmd iam get-user --user-name ci-pipeline-user
+
+# Create IAM user (if doesn't exist)
+awscmd iam create-user --user-name ci-pipeline-user
+
+# Create access keys for the user
+awscmd iam create-access-key --user-name ci-pipeline-user
+
+# Create the least-privilege policy from JSON file
+awscmd iam create-policy \
+  --policy-name CIPipelinePolicy \
+  --policy-document file://policies/ci-pipeline-policy.json
+
+# Attach the policy to the user
+awscmd iam attach-user-policy \
+  --user-name ci-pipeline-user \
+  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
+```
+
+This creates:
+
+1. IAM user `ci-pipeline-user`
+2. Access keys for programmatic access (save these!)
+3. The least-privilege policy from `policies/ci-pipeline-policy.json`
+4. Policy attachment linking user to policy
 
 **IMPORTANT:** Copy the Access Key ID and Secret Access Key from the output!
 
@@ -180,6 +203,26 @@ This proves the policy is enforcing least-privilege correctly!
 
 ```bash
 ./clean-iam.sh
+```
+
+**What the cleanup script does:**
+
+```bash
+# List and delete all access keys for the user
+awscmd iam list-access-keys --user-name ci-pipeline-user
+awscmd iam delete-access-key --user-name ci-pipeline-user --access-key-id <KEY_ID>
+
+# Detach policies from user
+awscmd iam list-attached-user-policies --user-name ci-pipeline-user
+awscmd iam detach-user-policy \
+  --user-name ci-pipeline-user \
+  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
+
+# Delete the IAM user
+awscmd iam delete-user --user-name ci-pipeline-user
+
+# Delete the IAM policy
+awscmd iam delete-policy --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
 ```
 
 **Reset config.sh:**
