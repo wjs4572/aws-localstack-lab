@@ -232,6 +232,28 @@ When you're ready to use AWS RDS:
 
 ## Troubleshooting
 
+### Port 3306 Already in Use
+
+**Symptom**: `Error response from daemon: ports are not available: exposing port TCP 0.0.0.0:3306`
+
+**Cause**: MySQL is already running on Windows (or another container is using port 3306)
+
+**Solution**:
+
+```powershell
+# In Administrator PowerShell (Windows)
+Get-Service | Where-Object {$_.Name -like "*mysql*"}
+Stop-Service MySQL80  # Or whatever MySQL service is running
+```
+
+Alternatively, modify `docker-compose.yml` to use a different port:
+
+```yaml
+mysql:
+  ports:
+    - "3307:3306"  # Use 3307 on host instead
+```
+
 ### MySQL Won't Start
 
 ```bash
@@ -251,8 +273,11 @@ docker-compose restart mysql
 # Verify MySQL is running
 docker exec lab-mysql mysqladmin ping -h localhost -u root -prootpassword
 
-# Check port
-netstat -an | grep 3306
+# Check port (WSL)
+sudo ss -tlnp | grep 3306
+
+# Check port (Windows PowerShell)
+netstat -ano | findstr :3306
 ```
 
 ### Python Module Not Found

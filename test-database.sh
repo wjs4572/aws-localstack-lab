@@ -21,7 +21,7 @@ run_python_demo() {
     # Install dependencies if needed
     if ! python3 -c "import mysql.connector" 2>/dev/null; then
         echo "[PYTHON] Installing dependencies..."
-        pip3 install -r python-app/requirements.txt
+        pip3 install -r python-app/requirements.txt --break-system-packages
     fi
     
     # Run Python demo

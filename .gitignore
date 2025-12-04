@@ -1,6 +1,8 @@
 # Build artifacts
 build/
+target/
 *.zip
+dependency-reduced-pom.xml
 
 # IDE
 .vscode/
