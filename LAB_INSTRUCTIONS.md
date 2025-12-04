@@ -1,214 +1,357 @@
-# Lab: IAM Least-Privilege Deployment
+# Lab: AWS Lambda Functions (Python & Java)
 
 ## Objective
 
-Demonstrate IAM security best practices by creating a restricted IAM user with the minimum permissions needed to run the CI/CD pipeline, proving you understand least-privilege access control.
+Learn AWS Lambda serverless computing by creating and deploying functions in both Python and Java. Compare runtimes, understand the Lambda execution model, and practice CloudWatch logging - essential skills for modern serverless architectures.
 
 ## What You'll Learn
 
-- ✅ IAM user creation and management
-- ✅ Least-privilege policy design
-- ✅ Access key management
-- ✅ Role-based access control for CI/CD
-- ✅ Security boundary testing
-- ✅ Difference between admin and restricted users
+- ✅ Lambda function creation in Python and Java
+- ✅ IAM execution roles for Lambda
+- ✅ Function deployment and versioning
+- ✅ Lambda invocation via AWS CLI
+- ✅ CloudWatch logs for debugging
+- ✅ Runtime performance comparison
+- ✅ Serverless best practices
+
+## ⚠️ LocalStack Limitation
+
+**Lambda requires LocalStack Pro** for advanced features. Community Edition supports basic Lambda but with limitations:
+- ✅ Function creation and invocation work
+- ⚠️ Limited CloudWatch logs integration
+- ⚠️ Some runtimes may not be fully supported
+
+**Recommended:** Use **AWS Free Tier** for this lab:
+- Lambda: 1 million requests/month free (always)
+- CloudWatch Logs: 5 GB free
+- Cost: $0 for this lab
+
+See `AWS_SETUP.md` for AWS account setup.
 
 ## Prerequisites
 
-Complete the setup from the main README:
-
+### For LocalStack (Limited)
 - LocalStack running
 - AWS CLI configured with localstack profile
-- Helper functions loaded (`source ./setup.sh` or `. .\setup.ps1`)
+- Python 3.11
+- Java 17 + Maven
+
+### For Real AWS (Recommended)
+- AWS account with credentials configured
+- AWS CLI v2
+- Python 3.11
+- Java 17 + Maven
+- Helper functions loaded (`source ./config.sh` and `use_aws`)
 
 ## Instructions
 
-### 1. Understand the Current State (Root User)
+### 1. Understand the Lambda Functions
 
-First, verify you're using the default LocalStack root user (full admin access):
+Examine both function implementations:
 
+**Python function:**
 ```bash
-awslocal sts get-caller-identity
+cat lambda-python/lambda_function.py
 ```
 
-You should see `"Arn": "arn:aws:iam::000000000000:root"` - this has unlimited permissions.
-
-### 2. Run the Pipeline as Root (Baseline)
-
-Run the pipeline with full admin access to see it work:
-
+**Java function:**
 ```bash
-./pipeline.sh dev
+cat lambda-java/src/main/java/com/example/lambda/Handler.java
 ```
 
-This succeeds because the root user can do anything.
+Notice the different handler patterns and how each runtime structures responses.
 
-### 3. Examine the IAM Policy
-
-Look at the least-privilege policy:
+### 2. Switch to AWS Mode (Recommended)
 
 ```bash
-cat policies/ci-pipeline-policy.json
+source ./config.sh
+use_aws
 ```
 
-Notice it ONLY allows:
+Or to use LocalStack (limited):
+```bash
+source ./config.sh
+use_localstack
+```
 
-- S3 bucket creation
-- S3 list/get/put operations
-- Only on buckets matching `ci-lab-*`
+### 3. Deploy Lambda Functions
 
-**No EC2, no Lambda, no RDS** - just what the pipeline needs!
-
-### 4. Create the Restricted IAM User
-
-Run the IAM setup script:
+Run the setup script to create both functions:
 
 ```bash
-./setup-iam.sh
+./setup-lambda.sh
 ```
 
-This will:
+This creates:
+- IAM execution role (for real AWS)
+- Python Lambda function (hello-python)
+- Java Lambda function (hello-java)
 
-1. Create IAM user `ci-pipeline-user`
-2. Generate access keys (save these!)
-3. Create the least-privilege policy
-4. Attach the policy to the user
+💡 *The Java build may take 1-2 minutes on first run while Maven downloads dependencies.*
 
-**IMPORTANT:** Copy the Access Key ID and Secret Access Key from the output!
+💡 *See "Script Details" section at the end to understand what commands run under the hood.*
 
-### 5. Configure AWS CLI with the New User
+### 4. Verify Functions Were Created
+
+List your Lambda functions:
 
 ```bash
-aws configure --profile ci-pipeline
+awscmd lambda list-functions
 ```
 
-Enter:
-
-- **AWS Access Key ID:** [from setup-iam.sh output]
-- **AWS Secret Access Key:** [from setup-iam.sh output]
-- **Default region:** us-east-1
-- **Default output format:** json
-
-### 6. Test with the Restricted User
-
-Update `config.sh` to use the new profile:
+Get details about a specific function:
 
 ```bash
-# Change this line in config.sh:
-export AWS_PROFILE="ci-pipeline"  # Was "localstack"
+awscmd lambda get-function --function-name hello-python
+awscmd lambda get-function --function-name hello-java
 ```
 
-Now run the pipeline with restricted permissions:
+### 5. Invoke the Functions
+
+Test both functions:
 
 ```bash
-./pipeline.sh dev
+./invoke-lambda.sh
 ```
 
-✅ **It should still work!** The policy grants exactly what's needed.
+This invokes both functions with sample payloads and displays the responses.
 
-### 7. Verify Security Boundaries
+**Manual invocation example:**
+```bash
+awscmd lambda invoke \
+    --function-name hello-python \
+    --payload '{"name":"Your Name"}' \
+    --cli-binary-format raw-in-base64-out \
+    response.json
 
-> **⚠️ IMPORTANT - LocalStack Limitation:**
-> IAM policy enforcement is a **LocalStack Pro feature only**. The Community Edition (free) will create IAM users and policies but **will not enforce them**. All commands will succeed regardless of the policy.
->
-> **To fully test IAM enforcement, you need:**
-> - LocalStack Pro (paid subscription), OR
-> - Real AWS account (free tier eligible)
->
-> **What this lab teaches:** Even though enforcement doesn't work in Community Edition, this lab demonstrates:
-> - ✅ How to write least-privilege IAM policies
-> - ✅ IAM user and policy management workflows
-> - ✅ Access key configuration
-> - ✅ AWS CLI profile switching
-> - ✅ Production-ready IAM patterns you'll use in real AWS
+cat response.json | jq '.'
+```
 
-#### Testing in LocalStack Community Edition
+### 6. View CloudWatch Logs (Real AWS Only)
 
-Even without enforcement, verify your configuration is correct:
+If using real AWS, view the execution logs:
 
 ```bash
-# Verify you're using the ci-pipeline profile
-awslocal sts get-caller-identity
-# Should show: "Arn": "arn:aws:iam::000000000000:user/ci-pipeline-user"
-
-# Verify the policy is attached
-awslocal iam list-attached-user-policies --user-name ci-pipeline-user
-# Should show: "PolicyName": "CIPipelinePolicy"
-
-# Get the policy document to verify it's correct
-awslocal iam get-policy --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
-awslocal iam get-policy-version \
-  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy \
-  --version-id v1
-# Review the JSON to confirm S3-only permissions on ci-lab-* resources
+./logs-lambda.sh
 ```
 
-#### Testing in Real AWS or LocalStack Pro
+Or manually:
+```bash
+awscmd logs tail /aws/lambda/hello-python --since 5m
+awscmd logs tail /aws/lambda/hello-java --since 5m
+```
 
-If you have access to real AWS or LocalStack Pro, test enforcement:
+### 7. Compare Runtimes
+
+Invoke both functions multiple times and observe:
+- **Cold start time** (first invocation)
+- **Warm start time** (subsequent invocations)
+- **Response format differences**
+- **Log output patterns**
+
+Python typically has faster cold starts, but both are fast when warm.
+
+### 8. Experiment (Optional)
+
+Try modifying the functions:
+- Add error handling
+- Return different status codes
+- Add environment variables
+- Increase memory/timeout settings
+
+Update a function:
+```bash
+cd lambda-python
+# Edit lambda_function.py
+zip ../lambda-python.zip lambda_function.py
+cd ..
+awscmd lambda update-function-code \
+    --function-name hello-python \
+    --zip-file fileb://lambda-python.zip
+```
+
+### 9. Cleanup
+
+**⚠️ IMPORTANT: Clean up to avoid charges (though minimal for Lambda)**
 
 ```bash
-# This should FAIL with AccessDenied - EC2 not in policy
-awslocal ec2 describe-instances
-
-# This should FAIL with AccessDenied - wrong bucket prefix
-awslocal s3 mb s3://my-other-bucket
-
-# This should SUCCEED - matches ci-lab-* pattern
-awslocal s3 mb s3://ci-lab-test-bucket
-
-# This should FAIL - IAM actions not in policy
-awslocal iam list-users
+./clean-lambda.sh
 ```
 
-**Expected results with enforcement:**
-- ✅ S3 operations on `ci-lab-*` buckets succeed
-- ❌ S3 operations on other buckets fail with `AccessDenied`
-- ❌ EC2, IAM, and other service operations fail with `AccessDenied`
+This removes all Lambda functions, IAM roles, and local build artifacts.
 
-This proves the policy is enforcing least-privilege correctly!
-
-### 8. Cleanup
-
-**Clean up S3 resources:**
-
-```bash
-./clean-deploy.sh dev
-```
-
-**Clean up IAM resources:**
-
-```bash
-./clean-iam.sh
-```
-
-**Reset config.sh:**
-
-```bash
-# Change back to:
-export AWS_PROFILE="localstack"
-```
+💡 *See "Script Details" section to understand the cleanup process.*
 
 ## Key Concepts
 
-- **Least Privilege** - Users get minimum permissions needed, nothing more
-- **Resource-based restrictions** - Policy limits actions to specific resources (`ci-lab-*`)
-- **Separation of concerns** - Pipeline user vs. admin user
-- **Access keys** - Credentials for programmatic access (not passwords)
-- **Security boundaries** - IAM enforces what actions are allowed
+- **Serverless** - No server management, pay per execution
+- **Event-driven** - Functions triggered by events (API calls, S3 uploads, etc.)
+- **Execution role** - IAM role that gives Lambda permissions
+- **Handler** - The entry point function Lambda calls
+- **Cold start** - Initialization delay on first invocation
+- **Warm start** - Fast execution when container is already running
+- **CloudWatch Logs** - Automatic logging for debugging
+
+## Python vs Java Lambda
+
+| Aspect | Python | Java |
+|--------|--------|------|
+| **Cold start** | ~100-200ms | ~1-2 seconds |
+| **Warm start** | ~1-5ms | ~1-5ms |
+| **Package size** | Smaller (~KB) | Larger (~MB with JAR) |
+| **Memory usage** | Lower | Higher |
+| **Development** | Faster iteration | More boilerplate |
+| **Performance** | Good | Excellent (when warm) |
+| **Best for** | Quick scripts, APIs | Enterprise, complex logic |
 
 ## Interview Talking Points
 
 After completing this lab, you can say:
 
-> "I implement least-privilege IAM policies for CI/CD pipelines. I create dedicated service accounts with only the S3 permissions needed for artifact deployment, tested in LocalStack. I understand resource-based restrictions and can demonstrate security boundaries by showing what actions are denied outside the policy scope."
+> "I develop serverless applications using AWS Lambda in both Python and Java. I understand Lambda execution models, cold vs warm starts, and IAM role configuration. I've deployed functions via AWS CLI, integrated with CloudWatch for logging and monitoring, and can compare runtime characteristics to choose the right language for the use case."
 
 ## Next Steps
 
-- Try modifying the policy to be even more restrictive (e.g., read-only)
-- Add a second policy for a different use case (e.g., CloudWatch logs)
-- Explore IAM roles vs. users
-- Investigate AWS STS for temporary credentials
+- Add API Gateway to create REST endpoints
+- Trigger Lambda from S3 events
+- Use Lambda Layers for shared dependencies
+- Implement Lambda with DynamoDB
+- Explore Step Functions for Lambda orchestration
+- Try container image deployments
+
+---
+
+## Script Details (Optional)
+
+This section explains what AWS commands each script executes. Use this to understand the Lambda workflow or run commands manually for learning.
+
+### setup-lambda.sh
+
+Creates IAM role and deploys both Lambda functions:
+
+```bash
+# Create IAM execution role (real AWS only)
+awscmd iam create-role \
+    --role-name lambda-execution-role \
+    --assume-role-policy-document '{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Principal": {"Service": "lambda.amazonaws.com"},
+        "Action": "sts:AssumeRole"
+      }]
+    }'
+
+# Attach Lambda execution policy
+awscmd iam attach-role-policy \
+    --role-name lambda-execution-role \
+    --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+# Package Python function
+cd lambda-python
+zip lambda-python.zip lambda_function.py
+
+# Create Python Lambda
+awscmd lambda create-function \
+    --function-name hello-python \
+    --runtime python3.11 \
+    --role <ROLE_ARN> \
+    --handler lambda_function.lambda_handler \
+    --zip-file fileb://lambda-python.zip
+
+# Build Java function
+cd lambda-java
+mvn clean package
+
+# Create Java Lambda
+awscmd lambda create-function \
+    --function-name hello-java \
+    --runtime java17 \
+    --role <ROLE_ARN> \
+    --handler com.example.lambda.Handler::handleRequest \
+    --zip-file fileb://lambda-java/target/lambda-java-1.0.0.jar \
+    --timeout 30 \
+    --memory-size 512
+```
+
+### invoke-lambda.sh
+
+Invokes both functions and saves responses:
+
+```bash
+# Invoke Python Lambda
+awscmd lambda invoke \
+    --function-name hello-python \
+    --payload '{"name":"DevOps Engineer"}' \
+    --cli-binary-format raw-in-base64-out \
+    response-python.json
+
+# Invoke Java Lambda
+awscmd lambda invoke \
+    --function-name hello-java \
+    --payload '{"name":"Cloud Architect"}' \
+    --cli-binary-format raw-in-base64-out \
+    response-java.json
+```
+
+### logs-lambda.sh
+
+Views CloudWatch logs for both functions (real AWS only):
+
+```bash
+# Tail Python Lambda logs
+awscmd logs tail /aws/lambda/hello-python --since 5m --format short
+
+# Tail Java Lambda logs
+awscmd logs tail /aws/lambda/hello-java --since 5m --format short
+```
+
+### clean-lambda.sh
+
+Removes all Lambda resources:
+
+```bash
+# Delete Lambda functions
+awscmd lambda delete-function --function-name hello-python
+awscmd lambda delete-function --function-name hello-java
+
+# Detach policy from role
+awscmd iam detach-role-policy \
+    --role-name lambda-execution-role \
+    --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+# Delete IAM role
+awscmd iam delete-role --role-name lambda-execution-role
+
+# Clean local files
+rm -f lambda-python.zip response-*.json
+rm -rf lambda-java/target
+```
+
+### awscmd helper
+
+All scripts use `awscmd` to work with both LocalStack and real AWS:
+
+- **LocalStack mode**: `awscmd` → `aws --endpoint-url=http://localhost:4566`
+- **Real AWS mode**: `awscmd` → `aws --profile default`
+
+Switch between modes:
+```bash
+source ./config.sh
+use_aws         # Switch to real AWS
+use_localstack  # Switch to LocalStack
+```
+
+---
+
+## License
+
+Licensed under the MIT License.
+
+**Attribution requested:**
+If you use this project in a public product or educational material,
+please cite: "Developed by W. Simpson / SimpsonConcepts".
+
 
 ## License
 
