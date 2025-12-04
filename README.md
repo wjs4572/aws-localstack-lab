@@ -10,7 +10,7 @@ This repository uses a **branch-per-lab** model. Each lab is self-contained and 
 - **`testing/iam`** - IAM least-privilege and role-based access
 - More labs coming soon...
 
-> **📝 Note on IAM Lab:** IAM policy enforcement requires LocalStack Pro (paid) or a real AWS account. The Community Edition teaches IAM concepts and workflows but won't enforce access restrictions. See the lab instructions for details.
+> **📝 Note on IAM Lab:** In our testing, IAM policy enforcement was available in LocalStack Pro or real AWS accounts. The Community Edition demonstrated IAM concepts and workflows but did not enforce access restrictions in our testing. See the lab instructions for details.
 
 ### Quick Start
 
@@ -70,7 +70,9 @@ This lab series covers essential AWS DevOps skills that employers expect:
 - ✅ Container deployments
 - ✅ Real-world DevOps workflows
 
-All safely practiced locally with LocalStack - no AWS charges!
+Designed for local practice with LocalStack or real AWS (see cost disclaimer in AWS_SETUP.md).
+
+> **Cost Disclaimer:** While some cloud services or cloud service emulation platforms may incur only minimal usage-based charges under certain conditions, actual costs vary by region, usage patterns, account configuration, and local currency exchange rates. Users are solely responsible for evaluating and accepting any financial risk.
 
 ## License
 
