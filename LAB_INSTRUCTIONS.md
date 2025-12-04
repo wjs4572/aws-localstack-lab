@@ -40,8 +40,16 @@ See `AWS_SETUP.md` for AWS account setup.
 - AWS account with credentials configured
 - AWS CLI v2
 - Python 3.11
-- Java 17 + Maven
+- Java 21 + Maven
+- `jq` installed (for JSON parsing)
 - Helper functions loaded (`source ./config.sh` and `use_aws`)
+
+**WSL/Linux setup:**
+```bash
+sudo apt install -y openjdk-21-jdk maven jq
+```
+
+See `WSL_SETUP.md` for complete WSL configuration.
 
 ## Instructions
 
