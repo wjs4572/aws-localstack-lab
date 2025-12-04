@@ -67,37 +67,15 @@ Run the IAM setup script:
 ./setup-iam.sh
 ```
 
-**What the script does:**
-
-```bash
-# Check if user exists
-awscmd iam get-user --user-name ci-pipeline-user
-
-# Create IAM user (if doesn't exist)
-awscmd iam create-user --user-name ci-pipeline-user
-
-# Create access keys for the user
-awscmd iam create-access-key --user-name ci-pipeline-user
-
-# Create the least-privilege policy from JSON file
-awscmd iam create-policy \
-  --policy-name CIPipelinePolicy \
-  --policy-document file://policies/ci-pipeline-policy.json
-
-# Attach the policy to the user
-awscmd iam attach-user-policy \
-  --user-name ci-pipeline-user \
-  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
-```
-
 This creates:
-
-1. IAM user `ci-pipeline-user`
-2. Access keys for programmatic access (save these!)
-3. The least-privilege policy from `policies/ci-pipeline-policy.json`
-4. Policy attachment linking user to policy
+- IAM user `ci-pipeline-user`
+- Access keys for programmatic access
+- The least-privilege policy from `policies/ci-pipeline-policy.json`
+- Policy attachment linking user to policy
 
 **IMPORTANT:** Copy the Access Key ID and Secret Access Key from the output!
+
+💡 *See "Script Details" section at the end to understand what commands run under the hood.*
 
 ### 5. Configure AWS CLI with the New User
 
@@ -205,25 +183,9 @@ This proves the policy is enforcing least-privilege correctly!
 ./clean-iam.sh
 ```
 
-**What the cleanup script does:**
+This removes all IAM resources created in step 4.
 
-```bash
-# List and delete all access keys for the user
-awscmd iam list-access-keys --user-name ci-pipeline-user
-awscmd iam delete-access-key --user-name ci-pipeline-user --access-key-id <KEY_ID>
-
-# Detach policies from user
-awscmd iam list-attached-user-policies --user-name ci-pipeline-user
-awscmd iam detach-user-policy \
-  --user-name ci-pipeline-user \
-  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
-
-# Delete the IAM user
-awscmd iam delete-user --user-name ci-pipeline-user
-
-# Delete the IAM policy
-awscmd iam delete-policy --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
-```
+💡 *See "Script Details" section below to see what commands are executed.*
 
 **Reset config.sh:**
 
@@ -252,6 +214,75 @@ After completing this lab, you can say:
 - Add a second policy for a different use case (e.g., CloudWatch logs)
 - Explore IAM roles vs. users
 - Investigate AWS STS for temporary credentials
+
+---
+
+## Script Details (Optional)
+
+This section explains what AWS commands each script executes. Use this to understand the IAM workflow or run commands manually for learning.
+
+### setup-iam.sh
+
+Creates the IAM user, access keys, and policy:
+
+```bash
+# Check if user exists
+awscmd iam get-user --user-name ci-pipeline-user
+
+# Create IAM user (if doesn't exist)
+awscmd iam create-user --user-name ci-pipeline-user
+
+# Create access keys for the user
+awscmd iam create-access-key --user-name ci-pipeline-user
+
+# Create the least-privilege policy from JSON file
+awscmd iam create-policy \
+  --policy-name CIPipelinePolicy \
+  --policy-document file://policies/ci-pipeline-policy.json
+
+# Attach the policy to the user
+awscmd iam attach-user-policy \
+  --user-name ci-pipeline-user \
+  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
+```
+
+### clean-iam.sh
+
+Removes all IAM resources:
+
+```bash
+# List and delete all access keys for the user
+awscmd iam list-access-keys --user-name ci-pipeline-user
+awscmd iam delete-access-key --user-name ci-pipeline-user --access-key-id <KEY_ID>
+
+# Detach policies from user
+awscmd iam list-attached-user-policies --user-name ci-pipeline-user
+awscmd iam detach-user-policy \
+  --user-name ci-pipeline-user \
+  --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
+
+# Delete the IAM user
+awscmd iam delete-user --user-name ci-pipeline-user
+
+# Delete the IAM policy
+awscmd iam delete-policy --policy-arn arn:aws:iam::000000000000:policy/CIPipelinePolicy
+```
+
+### awscmd helper
+
+All scripts use `awscmd` instead of `aws` directly. This function automatically routes commands to either LocalStack or real AWS based on your configuration:
+
+- **LocalStack mode**: `awscmd` → `aws --endpoint-url=http://localhost:4566`
+- **Real AWS mode**: `awscmd` → `aws --profile default`
+
+Switch between modes:
+```bash
+source ./config.sh
+use_aws         # Switch to real AWS
+use_localstack  # Switch to LocalStack
+```
+
+---
 
 ## License
 
