@@ -25,6 +25,9 @@ $branches = git branch -r | Where-Object { $_ -notmatch "HEAD" } | ForEach-Objec
 Write-Host "Found branches: $($branches -join ', ')"
 Write-Host ""
 
+# Save current branch
+$currentBranch = git rev-parse --abbrev-ref HEAD
+
 # Export each branch
 foreach ($branch in $branches) {
     Write-Host "Exporting branch: $branch"
@@ -36,15 +39,19 @@ foreach ($branch in $branches) {
     # Create the directory
     New-Item -ItemType Directory -Path $branchDir | Out-Null
     
-    # Export branch contents using git archive
-    git archive --format=tar "origin/$branch" | tar -x -C $branchDir
+    # Checkout the branch and copy files
+    git checkout "origin/$branch" -q 2>$null
     
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "  ✅ Exported to $dirName/"
-    } else {
-        Write-Host "  ❌ Failed to export $branch"
+    # Copy all files except .git
+    Get-ChildItem -Path . -Force | Where-Object { $_.Name -ne '.git' -and $_.Name -ne 'temp-export' } | ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination $branchDir -Recurse -Force
     }
+    
+    Write-Host "  ✅ Exported to $dirName/"
 }
+
+# Return to original branch
+git checkout $currentBranch -q 2>$null
 
 # Create the zip file
 Write-Host ""
