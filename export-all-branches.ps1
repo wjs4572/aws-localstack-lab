@@ -42,8 +42,12 @@ foreach ($branch in $branches) {
     # Checkout the branch and copy files
     git checkout "origin/$branch" -q 2>$null
     
-    # Copy all files except .git
-    Get-ChildItem -Path . -Force | Where-Object { $_.Name -ne '.git' -and $_.Name -ne 'temp-export' } | ForEach-Object {
+    # Copy all files except .git, temp-export, and zip files
+    Get-ChildItem -Path . -Force | Where-Object { 
+        $_.Name -ne '.git' -and 
+        $_.Name -ne 'temp-export' -and 
+        $_.Extension -ne '.zip'
+    } | ForEach-Object {
         Copy-Item -Path $_.FullName -Destination $branchDir -Recurse -Force
     }
     
