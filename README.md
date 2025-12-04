@@ -2,6 +2,10 @@
 
 A hands-on learning repository demonstrating real-world AWS DevOps concepts using LocalStack and real AWS. Each branch is a complete, tested lab focusing on one core AWS skill.
 
+> **Technology Selection Disclaimer:** The technologies used in this project were selected based on project-specific requirements, testing results, and practical development constraints observed at the time of implementation. These selections reflect the scope and goals of this work and should not be interpreted as endorsements or guarantees of performance, cost, or future availability.
+
+> **Cost Disclaimer:** While some cloud services or cloud service emulation platforms may incur only minimal usage-based charges under certain conditions, actual costs vary by region, usage patterns, account configuration, and local currency exchange rates. Users are solely responsible for evaluating and accepting any financial risk.
+
 ## 🎯 Repository Structure
 
 This repository uses a **branch-per-lab** model where each lab is isolated on its own branch. This approach:
@@ -12,11 +16,11 @@ This repository uses a **branch-per-lab** model where each lab is isolated on it
 
 ## 📚 Available Labs
 
-| Lab | Branch | Status | AWS Cost | LocalStack Support |
-|-----|--------|--------|----------|-------------------|
-| **CI/CD Pipeline** | `testing/pipeline` | ✅ Complete | Free (S3 only) | ✅ Community |
-| **IAM Least-Privilege** | `testing/iam` | ✅ Tested with real AWS | Always free | ⚠️ Pro only |
-| **Container Registry (ECR)** | `testing/ecr` | ✅ Tested with real AWS | Free tier (500MB) | ⚠️ Pro only |
+| Lab | Branch | Status | AWS Free Tier | LocalStack Community |
+|-----|--------|--------|---------------|---------------------|
+| **CI/CD Pipeline** | `testing/pipeline` | ✅ Complete | S3 available | ✅ Tested |
+| **IAM Least-Privilege** | `testing/iam` | ✅ Tested with real AWS | Always available | ⚠️ Limited in testing |
+| **Container Registry (ECR)** | `testing/ecr` | ✅ Tested with real AWS | Available (12mo) | ⚠️ Limited in testing |
 
 ### Quick Start
 
@@ -26,9 +30,9 @@ git clone https://github.com/wjs4572/aws-localstack-lab.git
 cd aws-localstack-lab
 
 # Choose a lab and checkout its branch
-git checkout testing/pipeline   # Start with pipeline (works on LocalStack Community)
-git checkout testing/iam        # Or try IAM (use AWS free tier)
-git checkout testing/ecr        # Or try ECR (use AWS free tier)
+git checkout testing/pipeline   # Start with pipeline
+git checkout testing/iam        # Or try IAM
+git checkout testing/ecr        # Or try ECR
 
 # Each branch has complete LAB_INSTRUCTIONS.md
 ```
@@ -49,18 +53,18 @@ Each lab includes:
 - 💡 Script details appendix showing actual AWS commands
 - 📝 Anki flashcards for command reference
 
-## 💰 Cost & LocalStack Support
+## 💰 Technology Choices & Testing Results
 
-**LocalStack Community (Free):**
-- ✅ Pipeline lab works perfectly
-- ⚠️ IAM/ECR labs don't support policy enforcement or ECR
+**LocalStack Community Edition (based on our testing):**
+- ✅ Pipeline lab functionality observed
+- ⚠️ IAM/ECR policy enforcement not available in our testing
 
-**AWS Free Tier (Recommended for IAM/ECR):**
-- IAM: Always free
-- ECR: 500 MB storage free for 12 months
-- Cost: $0 if you run cleanup scripts
+**AWS Free Tier:**
+- IAM: Always free tier available
+- ECR: Free tier available (12 months from account creation)
+- S3: Free tier available
 
-See `AWS_SETUP.md` in ECR/IAM branches for AWS account setup.
+See `AWS_SETUP.md` in lab branches for account setup details.
 
 ## Prerequisites
 
@@ -73,7 +77,7 @@ See `AWS_SETUP.md` in ECR/IAM branches for AWS account setup.
 
 ### For IAM/ECR Labs (Real AWS)
 
-- AWS account (free tier)
+- AWS account
 - AWS CLI configured with credentials
 - Docker (for ECR lab)
 
@@ -83,9 +87,9 @@ See individual lab branches for detailed setup instructions.
 
 **Recommended order:**
 
-1. **Pipeline Lab** (`testing/pipeline`) - Start here, works on LocalStack Community
-2. **IAM Lab** (`testing/iam`) - Learn security, use AWS free tier
-3. **ECR Lab** (`testing/ecr`) - Container workflows, use AWS free tier
+1. **Pipeline Lab** (`testing/pipeline`) - Start here, LocalStack Community
+2. **IAM Lab** (`testing/iam`) - Learn security with AWS
+3. **ECR Lab** (`testing/ecr`) - Container workflows with AWS
 
 ## License
 

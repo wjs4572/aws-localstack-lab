@@ -109,13 +109,13 @@ Now run the pipeline with restricted permissions:
 ### 7. Verify Security Boundaries
 
 > **⚠️ IMPORTANT - LocalStack Limitation:**
-> IAM policy enforcement is a **LocalStack Pro feature only**. The Community Edition (free) will create IAM users and policies but **will not enforce them**. All commands will succeed regardless of the policy.
+> Based on our testing, IAM policy enforcement was available in LocalStack Pro. The Community Edition created IAM users and policies in our testing but did not enforce access restrictions. Commands succeeded regardless of the configured policies.
 >
-> **To fully test IAM enforcement, you need:**
-> - LocalStack Pro (paid subscription), OR
-> - Real AWS account (free tier eligible)
+> **To fully test IAM enforcement:**
+> - LocalStack Pro (advanced features available in paid tiers), OR
+> - Real AWS account (Free Tier available)
 >
-> **What this lab teaches:** Even though enforcement doesn't work in Community Edition, this lab demonstrates:
+> **What this lab teaches:** Regardless of enforcement capabilities, this lab demonstrates:
 > - ✅ How to write least-privilege IAM policies
 > - ✅ IAM user and policy management workflows
 > - ✅ Access key configuration
