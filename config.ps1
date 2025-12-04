@@ -52,13 +52,13 @@ function awslocal {
 function use_aws {
   $env:USE_REAL_AWS = "true"
   . $PSCommandPath
-  Write-Host "✓ Switched to REAL AWS" -ForegroundColor Green
+  Write-Host "[OK] Switched to REAL AWS" -ForegroundColor Green
 }
 
 function use_localstack {
   $env:USE_REAL_AWS = "false"
   . $PSCommandPath
-  Write-Host "✓ Switched to LocalStack" -ForegroundColor Green
+  Write-Host "[OK] Switched to LocalStack" -ForegroundColor Green
 }
 
 # Project-specific configuration
@@ -91,6 +91,6 @@ if ($env:USE_REAL_AWS -eq "true") {
     $env:ECR_REGISTRY = "$($env:AWS_ACCOUNT_ID).dkr.ecr.$($env:AWS_REGION).localhost.localstack.cloud:4566"
 }
 
-Write-Host "✓ Project configuration loaded (PowerShell)" -ForegroundColor Green
+Write-Host "[OK] Project configuration loaded (PowerShell)" -ForegroundColor Green
 Write-Host "  Project: $env:PROJECT_NAME"
-Write-Host "  ECR Registry: $env:ECR_REGISTRY"
+Write-Host "  ECR Registry: $($env:ECR_REGISTRY)"

@@ -97,10 +97,16 @@ Run the ECR setup script to create a container registry:
 
 This creates an ECR repository named `ci-lab-app` where we'll store our Docker images.
 
+**What the script does:**
+```bash
+awscmd ecr describe-repositories --repository-names ci-lab-app  # Check if exists
+awscmd ecr create-repository --repository-name ci-lab-app       # Create repository
+```
+
 **Verify the repository:**
 
 ```bash
-awslocal ecr describe-repositories
+awscmd ecr describe-repositories
 ```
 
 ### 3. Build and Push Docker Image
@@ -111,30 +117,39 @@ Build the Docker image and push it to ECR:
 ./ecr-push.sh
 ```
 
-This script:
-1. Builds the Docker image from the Dockerfile
-2. Tags it for ECR
-3. Authenticates Docker with ECR
-4. Pushes the image to the repository
+**What the script does:**
+```bash
+# Build the Docker image from Dockerfile
+docker build -t ci-lab-app:latest .
+
+# Tag image for ECR (replace 324728439685 with your AWS account ID)
+docker tag ci-lab-app:latest 324728439685.dkr.ecr.us-east-1.amazonaws.com/ci-lab-app:latest
+
+# Authenticate Docker to ECR
+awscmd ecr get-login-password | docker login --username AWS --password-stdin 324728439685.dkr.ecr.us-east-1.amazonaws.com
+
+# Push image to ECR
+docker push 324728439685.dkr.ecr.us-east-1.amazonaws.com/ci-lab-app:latest
+```
 
 **What's happening:**
-- `docker build` creates the image layers
-- `docker tag` adds the ECR registry path
-- `ecr get-login-password` gets temporary credentials
-- `docker push` uploads to ECR
+- `docker build` creates the image layers from Dockerfile instructions
+- `docker tag` adds the ECR registry path so Docker knows where to push
+- `ecr get-login-password` gets temporary credentials (valid 12 hours)
+- `docker push` uploads image layers to ECR
 
 ### 4. Verify Image in ECR
 
 List images in the repository:
 
 ```bash
-awslocal ecr list-images --repository-name ci-lab-app
+awscmd ecr list-images --repository-name ci-lab-app
 ```
 
 Get detailed image information:
 
 ```bash
-awslocal ecr describe-images --repository-name ci-lab-app
+awscmd ecr describe-images --repository-name ci-lab-app
 ```
 
 ### 5. Pull and Run the Container
@@ -143,6 +158,22 @@ Pull the image from ECR and run it:
 
 ```bash
 ./ecr-pull.sh
+```
+
+**What the script does:**
+```bash
+# Authenticate Docker to ECR
+awscmd ecr get-login-password | docker login --username AWS --password-stdin 324728439685.dkr.ecr.us-east-1.amazonaws.com
+
+# Pull image from ECR
+docker pull 324728439685.dkr.ecr.us-east-1.amazonaws.com/ci-lab-app:latest
+
+# Clean up old container if exists
+docker stop ci-lab-app-test
+docker rm ci-lab-app-test
+
+# Run container (map port 8080 on host to port 80 in container)
+docker run -d --name ci-lab-app-test -p 8080:80 324728439685.dkr.ecr.us-east-1.amazonaws.com/ci-lab-app:latest
 ```
 
 This demonstrates the pull workflow - authenticating, pulling from the registry, and running the container.
@@ -196,6 +227,20 @@ Clean up all ECR resources:
 
 ```bash
 ./clean-ecr.sh
+```
+
+**What the script does:**
+
+```bash
+# Stop and remove running container
+docker stop ci-lab-app-test
+docker rm ci-lab-app-test
+
+# Delete image from ECR
+awscmd ecr batch-delete-image --repository-name ci-lab-app --image-ids imageTag=latest
+
+# Delete ECR repository
+awscmd ecr delete-repository --repository-name ci-lab-app --force
 ```
 
 This removes:
